@@ -21,11 +21,11 @@ import androidx.compose.ui.unit.dp
 import io.baconnet.ui.theme.BaconGradient
 
 @Composable
-fun GradientButton(text: String) {
+fun GradientButton(text: String, onClick: () -> Unit) {
     var shape = RoundedCornerShape(999.dp);
 
     Button(
-        onClick = { /*TODO*/ },
+        onClick = onClick,
         Modifier.fillMaxWidth(),
         contentPadding = PaddingValues(),
         colors = buttonColors(containerColor = Color.Transparent),
@@ -46,5 +46,5 @@ fun GradientButton(text: String) {
 @Preview
 @Composable
 fun GradientButtonPreview() {
-    GradientButton("TEXT")
+    GradientButton("TEXT", onClick = {})
 }

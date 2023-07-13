@@ -1,3 +1,5 @@
 <resources>
     <string name="app_name">bacon_net</string>
+    <string name="data_store">DataStore</string>
+    <string name="key_display_name">KEY_DISPLAY_NAME</string>
 </resources>
