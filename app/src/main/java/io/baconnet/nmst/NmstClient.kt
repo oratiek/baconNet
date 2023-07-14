@@ -19,6 +19,7 @@ import android.os.Handler
 import android.os.Looper
 import android.os.ParcelUuid
 import android.util.Log
+import androidx.activity.result.ActivityResultCaller
 import androidx.core.app.ActivityCompat
 import java.util.Date
 import java.util.UUID
@@ -33,6 +34,7 @@ class NmstClient(private val context: Context) {
     companion object {
         const val VERSION = 0
         const val LOG_TAG = "NMST"
+        const val SERVICE_UUID = "e9667e2a-e2d9-4b35-872d-fe6d5f086b81"
         private const val SCAN_PERIOD: Long = 10000
     }
 
@@ -45,10 +47,18 @@ class NmstClient(private val context: Context) {
     private val leScanCallback = object : ScanCallback() {
         override fun onScanResult(callbackType: Int, result: ScanResult?) {
             super.onScanResult(callbackType, result)
-            Log.i(LOG_TAG, "onScanResult(): callbackType: $callbackType")
-            result?.device?.let {
-                Log.i(LOG_TAG, "BLE device found: $it")
-                leDevices.add(it)
+            //Log.i(LOG_TAG, "onScanResult(): callbackType: $callbackType")
+            result?.device?.let { device ->
+                if (ActivityCompat.checkSelfPermission(context, Manifest.permission.BLUETOOTH_CONNECT) != PackageManager.PERMISSION_GRANTED) {
+                    throw RuntimeException("BLUETOOTH_CONNECT is not permitted.")
+                }
+                device.uuids?.forEach {
+                    Log.i(LOG_TAG, "BLE device found: $device, ${it.uuid}")
+                    if (it.uuid == UUID.fromString(SERVICE_UUID)) {
+                        Log.i(LOG_TAG, "BLE device found: $device, ${device.uuids}")
+                        leDevices.add(device)
+                    }
+                }
             }
         }
     }
@@ -114,6 +124,10 @@ class NmstClient(private val context: Context) {
             if (ActivityCompat.checkSelfPermission(context, Manifest.permission.BLUETOOTH_ADVERTISE) != PackageManager.PERMISSION_GRANTED) {
                 throw RuntimeException("BLUETOOTH_ADVERTISE is not permitted.")
             }
+            if (ActivityCompat.checkSelfPermission(context, Manifest.permission.BLUETOOTH_CONNECT) != PackageManager.PERMISSION_GRANTED) {
+
+                throw RuntimeException("BLUETOOTH_CONNECT is not permitted.")
+            }
         }
 
         if (!bluetoothAdapter.isLe2MPhySupported) {
@@ -174,7 +188,7 @@ class NmstClient(private val context: Context) {
             it.setScanResponseData(
                 AdvertiseData
                     .Builder()
-                    .addServiceUuid(ParcelUuid(UUID.randomUUID()))
+                    .addServiceUuid(ParcelUuid(UUID.fromString(SERVICE_UUID)))
                     .build()
             )
         }

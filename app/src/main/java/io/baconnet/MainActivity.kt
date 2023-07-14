@@ -1,10 +1,12 @@
 package io.baconnet
 
+import android.Manifest
 import android.app.Activity
 import android.content.Context
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
@@ -17,6 +19,7 @@ import androidx.navigation.NavController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import io.baconnet.nmst.NmstClient
 import io.baconnet.ui.pages.FirstTime
 import io.baconnet.ui.pages.Post
 import io.baconnet.ui.pages.Timeline
@@ -29,6 +32,21 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         this.initDataIfNotExists()
+
+        val requestPermissions = arrayOf(Manifest.permission.BLUETOOTH_CONNECT, Manifest.permission.BLUETOOTH_ADVERTISE, Manifest.permission.BLUETOOTH_SCAN)
+        val permissionLauncher = registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) { isGranted -> Boolean
+            var i = 0
+            isGranted.forEach {
+                if (!it.value) {
+                    requestPermissions[i] = it.key
+                    i++
+                }
+            }
+        }
+        permissionLauncher.launch(requestPermissions)
+
+        val nmst_client = NmstClient(applicationContext)
+        nmst_client.init()
 
         setContent {
             Bacon_netTheme {
