@@ -1,15 +1,19 @@
 package io.baconnet.ui.pages
 
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Send
+import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material.icons.outlined.Settings
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import io.baconnet.R
@@ -35,12 +39,30 @@ fun Timeline() {
     Scaffold(
         topBar = {
             CenterAlignedTopAppBar(title = {
-                Image(painter = painterResource(id = R.drawable.baconnet_logo_flat_outline), contentDescription = "baconnet logo")
+                Image(
+                    painter = painterResource(id = R.drawable.baconnet_logo_flat_outline),
+                    contentDescription = "baconnet logo"
+                )
+            }, actions = {
+                IconButton(onClick = { activity.navigateToSettings() }) {
+                    Icon(
+                        Icons.Outlined.Settings,
+                        contentDescription = "settings icon",
+                        tint = Color.Gray
+                    )
+                }
             })
         },
         floatingActionButton = {
-            FloatingActionButton(onClick = { activity.navigateToPost() }, containerColor = BaconPink) {
-                Icon(painter = rememberVectorPainter(image = Icons.Default.Send), contentDescription = "send icon", tint = Color.White)
+            FloatingActionButton(
+                onClick = { activity.navigateToPost() },
+                containerColor = BaconPink
+            ) {
+                Icon(
+                    painter = rememberVectorPainter(image = Icons.Default.Send),
+                    contentDescription = "send icon",
+                    tint = Color.White
+                )
             }
         }
     ) { paddingValues ->
@@ -60,6 +82,7 @@ fun Timeline() {
                 PostCard()
                 PostCard()
                 PostCard()
+                Box(modifier = Modifier.padding(vertical = 128.dp))
             }
         }
     }

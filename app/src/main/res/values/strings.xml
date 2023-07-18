@@ -2,4 +2,7 @@
     <string name="app_name">bacon_net</string>
     <string name="data_store">DataStore</string>
     <string name="key_display_name">KEY_DISPLAY_NAME</string>
+    <string name="key_encryption_type">KEY_ENCRYPTION_TYPE</string>
+    <string name="key_public_key">KEY_PUBLIC_KEY</string>
+    <string name="key_private_key">KEY_PRIVATE_KEY</string>
 </resources>
