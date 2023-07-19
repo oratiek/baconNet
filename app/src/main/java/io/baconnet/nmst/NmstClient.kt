@@ -30,7 +30,7 @@ enum class SubscribeErrorCode {
 
 enum class SendErrorCode {}
 
-class NmstClient(private val context: Context) {
+class NmstClient(private val context: Context, val peripheral: PeripheralBleServerManager, val central: CentralBleServerManager) {
     companion object {
         const val VERSION = 0
         const val LOG_TAG = "NMST"
@@ -47,17 +47,13 @@ class NmstClient(private val context: Context) {
     private val leScanCallback = object : ScanCallback() {
         override fun onScanResult(callbackType: Int, result: ScanResult?) {
             super.onScanResult(callbackType, result)
-            //Log.i(LOG_TAG, "onScanResult(): callbackType: $callbackType")
             result?.device?.let { device ->
                 if (ActivityCompat.checkSelfPermission(context, Manifest.permission.BLUETOOTH_CONNECT) != PackageManager.PERMISSION_GRANTED) {
                     throw RuntimeException("BLUETOOTH_CONNECT is not permitted.")
                 }
-                device.uuids?.forEach {
-                    Log.i(LOG_TAG, "BLE device found: $device, ${it.uuid}")
-                    if (it.uuid == UUID.fromString(SERVICE_UUID)) {
-                        Log.i(LOG_TAG, "BLE device found: $device, ${device.uuids}")
-                        leDevices.add(device)
-                    }
+
+                if (device.name == "IzdaU1") {
+                    central.connect(device).enqueue()
                 }
             }
         }
@@ -79,7 +75,7 @@ class NmstClient(private val context: Context) {
         bluetoothLeScanner = bluetoothAdapter.bluetoothLeScanner
         bluetoothLeAdvertiser = bluetoothAdapter.bluetoothLeAdvertiser
 
-        setupAdvertising()
+        //setupAdvertising()
         scanLeDevice()
     }
 

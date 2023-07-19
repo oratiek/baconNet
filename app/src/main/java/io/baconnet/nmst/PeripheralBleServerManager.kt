@@ -58,6 +58,7 @@ class PeripheralBleServerManager(private val context: Context) : BleServerManage
             .build()
         val advertiseData = AdvertiseData.Builder()
             .addServiceUuid(ParcelUuid(nmstUUID))
+            .setIncludeDeviceName(true)
             .build()
         val advertiseCallback = object : AdvertiseCallback() {}
 
