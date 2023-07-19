@@ -20,6 +20,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import io.baconnet.nmst.NmstClient
+import io.baconnet.nmst.PeripheralBleServerManager
 import io.baconnet.ui.pages.FirstTime
 import io.baconnet.ui.pages.Post
 import io.baconnet.ui.pages.Settings
@@ -47,8 +48,8 @@ class MainActivity : ComponentActivity() {
         }
         permissionLauncher.launch(requestPermissions)
 
-        val nmst_client = NmstClient(applicationContext)
-        nmst_client.init()
+        val peripheral = PeripheralBleServerManager(this)
+        peripheral.open()
 
         setContent {
             Bacon_netTheme {

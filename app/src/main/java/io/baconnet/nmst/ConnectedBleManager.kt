@@ -18,6 +18,6 @@ class ConnectedBleManager(context: Context) : BleManager(context) {
     }
 
     fun notify(characteristic: BluetoothGattCharacteristic, data: ByteArray) {
-        this.sendNotification(characteristic, data)
+        this.sendNotification(characteristic, data).enqueue()
     }
 }
