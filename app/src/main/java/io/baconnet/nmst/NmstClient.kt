@@ -84,6 +84,8 @@ class NmstClient(private val context: Context, val peripheral: PeripheralBleServ
     /**
      * メッセージを受信する
      *
+     * キューにメッセージが存在しない場合はnullを返す
+     *
      * @return 受信したメッセージ
      */
     fun receive(): Message? {
