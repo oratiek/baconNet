@@ -22,8 +22,10 @@ import androidx.navigation.compose.rememberNavController
 import io.baconnet.nmst.NmstClient
 import io.baconnet.ui.pages.FirstTime
 import io.baconnet.ui.pages.Post
+import io.baconnet.ui.pages.Settings
 import io.baconnet.ui.pages.Timeline
 import io.baconnet.ui.theme.Bacon_netTheme
+import java.security.KeyPairGenerator
 
 class MainActivity : ComponentActivity() {
     lateinit var navController: NavController
@@ -63,6 +65,7 @@ class MainActivity : ComponentActivity() {
                         Timeline()
                     }
                     composable("post") { Post() }
+                    composable("settings") { Settings() }
                 }
             }
         }
@@ -71,12 +74,24 @@ class MainActivity : ComponentActivity() {
     private fun initDataIfNotExists() {
         val pref = this.getPreferences(Context.MODE_PRIVATE)
 
+        val encryptionType = pref.getString(getString(R.string.key_encryption_type), "") ?: ""
+        val publicKey = pref.getString(getString(R.string.key_public_key), "") ?: ""
+        val privateKey = pref.getString(getString(R.string.key_private_key), "") ?: ""
         val displayName = pref.getString(getString(R.string.key_display_name), "") ?: ""
 
         with(pref.edit()) {
 
             if (displayName == "") {
                 putString(getString(R.string.key_display_name), "")
+            }
+
+            if (encryptionType == "") {
+                val generator = KeyPairGenerator.getInstance("RSA")
+                val pair = generator.genKeyPair()
+
+                putString(getString(R.string.key_encryption_type), "RSA")
+                putString(getString(R.string.key_public_key), pair.public.toString())
+                putString(getString(R.string.key_private_key), pair.private.toString())
             }
 
             apply()
@@ -97,11 +112,32 @@ class MainActivity : ComponentActivity() {
         }
     }
 
+    public fun getEncryptionType(): String {
+        val pref = this.getPreferences(Context.MODE_PRIVATE)
+
+        return pref.getString(getString(R.string.key_encryption_type), "") ?: ""
+    }
+
+    public fun getPublicKey(): String {
+        val pref = this.getPreferences(Context.MODE_PRIVATE)
+        return pref.getString(getString(R.string.key_public_key), "") ?: ""
+    }
+
+    public fun getPrivateKey(): String {
+        val pref = this.getPreferences(Context.MODE_PRIVATE)
+        return pref.getString(getString(R.string.key_private_key), "") ?: ""
+    }
+
     public fun navigateToTimeline() {
         navController.navigate("timeline")
     }
 
+
     public fun navigateToPost() {
         navController.navigate("post")
+    }
+
+    public fun navigateToSettings() {
+        navController.navigate("settings")
     }
 }

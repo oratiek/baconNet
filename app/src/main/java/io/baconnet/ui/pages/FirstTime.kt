@@ -54,7 +54,6 @@ fun FirstTime() {
     var activity = LocalContext.current as MainActivity
     var displayName by remember { mutableStateOf("") }
     var errorText by remember { mutableStateOf("") }
-    val navController = rememberNavController()
 
     fun handleStartClick() {
         errorText = ""
