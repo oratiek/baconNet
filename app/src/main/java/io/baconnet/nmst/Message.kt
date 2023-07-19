@@ -1,7 +1,9 @@
 package io.baconnet.nmst
 
-import java.util.Date
+import kotlinx.datetime.Instant
+import kotlinx.serialization.Serializable
 
-class Message(public val displayName: String, public val userId: String, public val messageId: String, public val body: String, public val postedAt: Date) {
+@Serializable
+data class Message(public val displayName: String, public val userId: String, public val messageId: String, public val body: String, public val postedAt: Instant) {
 
 }

@@ -11,8 +11,14 @@ import android.content.Context
 import android.content.pm.PackageManager
 import android.os.ParcelUuid
 import androidx.core.app.ActivityCompat
+import kotlinx.datetime.Clock
+import kotlinx.datetime.Instant
+import kotlinx.serialization.encodeToString
+import kotlinx.serialization.json.Json
 import no.nordicsemi.android.ble.BleServerManager
 import no.nordicsemi.android.ble.observer.ServerObserver
+import java.nio.ByteBuffer
+import java.util.Date
 import java.util.UUID
 
 class PeripheralBleServerManager(private val context: Context) : BleServerManager(context) {
@@ -22,6 +28,7 @@ class PeripheralBleServerManager(private val context: Context) : BleServerManage
     private val nmstUUID = UUID.fromString(NMST_UUID)
 
     val nmstCharacteristic = characteristic(nmstUUID, BluetoothGattCharacteristic.PROPERTY_NOTIFY, BluetoothGattCharacteristic.PERMISSION_READ, cccd())
+    private var messageQueue = ArrayDeque<Message>()
 
     override fun initializeServer() = listOf(service(nmstUUID, nmstCharacteristic))
 
@@ -38,6 +45,25 @@ class PeripheralBleServerManager(private val context: Context) : BleServerManage
         override fun onDeviceDisconnectedFromServer(device: BluetoothDevice) {}
     }
 
+    fun splitByteArray(input: ByteArray): List<ByteArray> {
+        val chunkSize = 16
+        val chunks = mutableListOf<ByteArray>()
+
+        var index = 0
+        while (index < input.size) {
+            val endIndex = kotlin.math.min(index + chunkSize, input.size)
+            val chunk = input.sliceArray(index until endIndex)
+            chunks.add(chunk)
+            index = endIndex
+        }
+
+        return chunks
+    }
+
+    fun addQueue(message: Message) {
+        this.messageQueue.add(message)
+    }
+
     fun deviceConnectedToServer(device: BluetoothDevice) {
         val connectedBleManager = ConnectedBleManager(context)
         connectedBleManager.setConnectionObserver(connectionObserver)
@@ -45,8 +71,29 @@ class PeripheralBleServerManager(private val context: Context) : BleServerManage
 
         Thread {
             while (true) {
-                connectedBleManager.notify(nmstCharacteristic, "test".toByteArray())
-                Thread.sleep(1000)
+                if (!this.messageQueue.isEmpty()) {
+                    val message = this.messageQueue.removeFirst()
+
+                    val data = Json.encodeToString(message).toByteArray()
+                    val chunks = splitByteArray(data)
+
+                    connectedBleManager.notify(nmstCharacteristic, run {
+                        val byteArray = ByteArray(3)
+                        byteArray[0] = chunks.size.toByte()
+                        byteArray[1] = data.size.toByte()
+                        byteArray[2] = 0xFF.toByte()
+                        byteArray
+                    })
+
+                    chunks.forEach {
+                        connectedBleManager.notify(nmstCharacteristic, it)
+                        Thread.sleep(10)
+                    }
+
+                    connectedBleManager.notify(nmstCharacteristic, ByteArray(3))
+                }
+
+                Thread.sleep(10)
             }
         }.start()
 

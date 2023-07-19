@@ -7,8 +7,9 @@ import android.content.Context
 import android.util.Log
 import no.nordicsemi.android.ble.BleManager
 import no.nordicsemi.android.ble.data.Data
+import java.nio.ByteBuffer
 
-class CentralBleServerManager(context: Context) : BleManager(context) {
+class CentralBleServerManager(context: Context, var nmstBuffer: ByteBuffer?, var nmstReadCount: Int, var messageQueue: ArrayDeque<Message>) : BleManager(context) {
     var discoveredServicesHandler: ((CentralBleServerManager, BluetoothGatt, List<BluetoothGattService>) -> Unit)? = null
 
     private var gattCallback: BleManagerGattCallback? = null

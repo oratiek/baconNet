@@ -21,6 +21,8 @@ import android.os.ParcelUuid
 import android.util.Log
 import androidx.activity.result.ActivityResultCaller
 import androidx.core.app.ActivityCompat
+import kotlinx.datetime.Clock
+import kotlinx.datetime.Instant
 import java.util.Date
 import java.util.UUID
 
@@ -82,23 +84,11 @@ class NmstClient(private val context: Context, val peripheral: PeripheralBleServ
     /**
      * メッセージを受信する
      *
-     * 受信は非同期に行われ、`stopSubscribe`が呼び出されるまで何度も受信を続ける
-     *
-     * @param onReceive 受信したときに呼び出される
-     * @param onError 何かしらのエラーが発生したときに呼び出される
-     *
-     * @return このメソッドは値を返さない
+     * @return 受信したメッセージ
      */
-    fun subscribe(onReceive: (msg: Message) -> Unit, onError: (code: SubscribeErrorCode) -> Unit): Unit {
-        onReceive(Message("名無し", "162ea6d23c3df5b4379c636c491e08883f547da86d0c23165bf2a8fdd9a25514", "c0e89a293bd36c7a768e4e9d2c5475a8", "こんにちは", Date()))
+    fun receive(): Message? {
+        return central.messageQueue.removeFirstOrNull()
     }
-
-    /**
-     * メッセージの受信を停止する
-     *
-     * @return このメソッドは値を返さない
-     */
-    fun stopSubscribe(): Unit {}
 
     /**
      * メッセージを送信する
@@ -107,6 +97,7 @@ class NmstClient(private val context: Context, val peripheral: PeripheralBleServ
      */
     fun send(msg: Message, onSend: () -> Unit, onError: (code: SendErrorCode) -> Unit): Unit {
         Log.i(LOG_TAG, "Send message to ${msg.displayName}, body: ${msg.body}")
+        peripheral.addQueue(msg)
         onSend()
     }
 
