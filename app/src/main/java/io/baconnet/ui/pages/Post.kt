@@ -89,9 +89,9 @@ fun Post() {
                             Text(text = "投稿内容")
                         },
                         supportingText = {
-                            Text(text = "${body.length} / 140")
+                            Text(text = "${body.length} / 2000")
                         },
-                        onValueChange = { newVal -> body = newVal.trim().take(140) },
+                        onValueChange = { newVal -> body = newVal.trim().take(2000) },
                         modifier = Modifier
                             .fillMaxWidth()
                             .height(300.dp),

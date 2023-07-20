@@ -90,7 +90,7 @@ class MainActivity : ComponentActivity() {
                     if (central.nmstBuffer == null) {
                         val buffer = ByteBuffer.wrap(data.value!!)
                         if (buffer.get().toInt() == -1) {
-                            central.nmstReadCount = buffer.get().toInt()
+                            central.nmstReadCount = buffer.int
                             central.nmstBuffer = ByteBuffer.wrap(ByteArray(buffer.int))
                         }
                     } else if (central.nmstReadCount != 0) {

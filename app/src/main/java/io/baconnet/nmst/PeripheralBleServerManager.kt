@@ -81,9 +81,9 @@ class PeripheralBleServerManager(private val context: Context) : BleServerManage
                     val chunks = splitByteArray(data)
 
                     connectedBleManager.notify(nmstCharacteristic, run {
-                        val byteBuffer = ByteBuffer.allocate(6)
+                        val byteBuffer = ByteBuffer.allocate(9)
                         byteBuffer.put(0xFF.toByte())
-                        byteBuffer.put(chunks.size.toByte())
+                        byteBuffer.putInt(chunks.size)
                         byteBuffer.putInt(data.size)
                         byteBuffer.array()
                     })
