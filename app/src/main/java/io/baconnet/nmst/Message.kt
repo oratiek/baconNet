@@ -16,7 +16,7 @@ import java.security.Signature
 
 
 @Serializable
-data class Message(public val displayName: String, public val userId: String, public val messageId: String, public val body: String, public val postedAt: Instant, public val sign: String) {
+data class Message(public val displayName: String, public val userId: String, public val messageId: String, public val body: String, public val postedAt: Instant, public val sign: String, val sentDevices: ArrayList<String>) {
     companion object {
         fun newMessage(body: String, context: Context): Message {
             val activity = context as MainActivity
@@ -27,7 +27,7 @@ data class Message(public val displayName: String, public val userId: String, pu
             val md = MessageDigest.getInstance("SHA-256")
             val digest = md.digest(sign.toByteArray())
 
-            return Message(displayName, Base64.encodeToString(publicKey.encoded, Base64.DEFAULT), digest.joinToString(separator = "") { eachByte -> "%02x".format(eachByte) }, body, postedAt, sign)
+            return Message(displayName, Base64.encodeToString(publicKey.encoded, Base64.DEFAULT), digest.joinToString(separator = "") { eachByte -> "%02x".format(eachByte) }, body, postedAt, sign, arrayListOf())
         }
 
         fun sign(plainText: String, privateKey: PrivateKey): String {

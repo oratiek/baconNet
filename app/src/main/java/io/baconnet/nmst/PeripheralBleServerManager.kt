@@ -16,6 +16,7 @@ import io.baconnet.MainActivity
 import io.baconnet.R
 import kotlinx.datetime.Clock
 import kotlinx.datetime.Instant
+import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import no.nordicsemi.android.ble.BleServerManager
@@ -26,11 +27,15 @@ import java.util.UUID
 
 class PeripheralBleServerManager(private val context: Context) : BleServerManager(context) {
     private val nmstUUID = UUID.fromString(context.getString(R.string.nmst_service_uuid))
+    private val nmstReceiveUUID = UUID.fromString(context.getString(R.string.nmst_receive_service_uuid))
+    private val nmstRequestUUID = UUID.fromString(context.getString(R.string.nmst_request_service_uuid))
 
     val nmstCharacteristic = characteristic(nmstUUID, BluetoothGattCharacteristic.PROPERTY_NOTIFY, BluetoothGattCharacteristic.PERMISSION_READ, cccd())
+    val nmstReceiveCharacteristic = characteristic(nmstReceiveUUID, BluetoothGattCharacteristic.PROPERTY_WRITE_NO_RESPONSE, BluetoothGattCharacteristic.PERMISSION_WRITE)
+    val nmstRequestCharacteristic = characteristic(nmstRequestUUID, BluetoothGattCharacteristic.PROPERTY_WRITE_NO_RESPONSE, BluetoothGattCharacteristic.PERMISSION_WRITE)
     private var messageQueue = ArrayDeque<Message>()
 
-    override fun initializeServer() = listOf(service(nmstUUID, nmstCharacteristic))
+    override fun initializeServer() = listOf(service(nmstUUID, nmstCharacteristic, nmstReceiveCharacteristic, nmstRequestCharacteristic))
 
     private val connectionObserver = object: ConnectionObserverInterface {}
     private val serverObserver = object: ServerObserver {
@@ -45,21 +50,6 @@ class PeripheralBleServerManager(private val context: Context) : BleServerManage
         override fun onDeviceDisconnectedFromServer(device: BluetoothDevice) {}
     }
 
-    fun splitByteArray(input: ByteArray): List<ByteArray> {
-        val chunkSize = 20
-        val chunks = mutableListOf<ByteArray>()
-
-        var index = 0
-        while (index < input.size) {
-            val endIndex = kotlin.math.min(index + chunkSize, input.size)
-            val chunk = input.sliceArray(index until endIndex)
-            chunks.add(chunk)
-            index = endIndex
-        }
-
-        return chunks
-    }
-
     fun addQueue(message: Message) {
         this.messageQueue.add(message)
     }
@@ -69,11 +59,61 @@ class PeripheralBleServerManager(private val context: Context) : BleServerManage
         connectedBleManager.setConnectionObserver(connectionObserver)
         connectedBleManager.useServer(this)
 
+        var readRequest: String? = null
+        connectedBleManager.withWriteCallback(nmstRequestCharacteristic).with { device, data ->
+            Log.i("Peripheral", "Received: NMST Request.")
+            readRequest = device.address!!
+        }
+
+        var nmstBuffer: ByteBuffer? = null
+        var nmstReadCount: Int = 0
+        connectedBleManager.withWriteCallback(nmstReceiveCharacteristic).with { device, data ->
+            if (data.value!![0].toInt() == -2) {
+                Log.i("Peripheral", "Received readRequest!")
+                readRequest = device.address!!
+            } else if (nmstBuffer == null) {
+                val buffer = ByteBuffer.wrap(data.value!!)
+                if (buffer.get().toInt() == -1) {
+                    nmstReadCount = buffer.int
+                    nmstBuffer = ByteBuffer.wrap(ByteArray(buffer.int))
+                }
+            } else if (nmstReadCount != 0) {
+                nmstReadCount--
+                Log.i("Central", "Receive: ${String(data.value!!)}")
+                nmstBuffer?.put(data.value!!)
+            } else {
+                val data = String(nmstBuffer!!.array())
+                val message: Message = Json.decodeFromString(data)
+                val messages = (context as MainActivity).getMessages()!!
+                if (!messages.containsKey(message.messageId)) {
+                    messages[message.messageId] = message
+
+                    context.nmstClient.central.messageQueue.add(message)
+                    context.nmstClient.messages.value?.add(message)
+                    context.setMessages(messages)
+                    Log.i("NMST", "Messages: ${context.nmstClient.messages}")
+                    nmstBuffer = null
+                    Log.i("Central", "Receive: $data")
+                    Log.i("Central", "Receive: $message")
+
+                    context.navigateToTimeline()
+                }
+            }
+        }
+
         Thread {
-            this.messageQueue.addAll((context as MainActivity).nmstClient.messages.value!!)
-            Log.i("Peripheral", "Queued messages: ${context.nmstClient.messages.value!!}")
-            Thread.sleep(1000)
             while (true) {
+                if (readRequest != null) {
+                    Log.i("Peripheral", "Received readRequest")
+                    val messages = run {
+                        val messages = (context as MainActivity).nmstClient.messages.value!!
+                        messages.filter { message ->
+                            (!message.sentDevices.contains(readRequest) && message.sentDevices.count() < 10) || true
+                        }
+                    }
+                    this.messageQueue.addAll(messages)
+                    readRequest = null
+                }
                 if (!this.messageQueue.isEmpty()) {
                     val message = this.messageQueue.removeFirst()
 
@@ -96,7 +136,7 @@ class PeripheralBleServerManager(private val context: Context) : BleServerManage
                     connectedBleManager.notify(nmstCharacteristic, ByteArray(3))
                 }
 
-                Thread.sleep(3)
+                Thread.sleep(10)
             }
         }.start()
 

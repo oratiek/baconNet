@@ -32,6 +32,10 @@ class CentralBleServerManager(context: Context, var nmstBuffer: ByteBuffer?, var
 
     fun context() = context
 
+    fun write(characteristic: BluetoothGattCharacteristic, data: ByteArray) {
+        writeCharacteristic(characteristic, data).enqueue()
+    }
+
     fun notificationCallback(characteristic: BluetoothGattCharacteristic, callback: (CentralBleServerManager, BluetoothDevice, Data) -> Unit) {
         setNotificationCallback(characteristic).with { device, data -> callback(this, device, data) }
         enableNotifications(characteristic).enqueue()

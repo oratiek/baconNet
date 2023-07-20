@@ -24,6 +24,7 @@ import io.baconnet.nmst.CentralBleServerManager
 import io.baconnet.nmst.ConnectionObserverInterface
 import io.baconnet.nmst.NmstClient
 import io.baconnet.nmst.PeripheralBleServerManager
+import io.baconnet.nmst.splitByteArray
 import io.baconnet.ui.pages.FirstTime
 import io.baconnet.ui.pages.Post
 import io.baconnet.ui.pages.Settings
@@ -68,7 +69,7 @@ class MainActivity : ComponentActivity() {
         central.setConnectionObserver(object: ConnectionObserverInterface {})
         central.discoveredServicesHandler = { central, gatt, services ->
             val nmstService = services.find {
-                it.uuid == UUID.fromString("0f43d388-2ccd-4668-ab5c-5ba40a198261")
+                it.uuid == UUID.fromString(central.context().getString(R.string.nmst_service_uuid))
             }
             Log.i("Central", "Service discovered.")
             if (nmstService == null) {
@@ -86,6 +87,44 @@ class MainActivity : ComponentActivity() {
                 }
             } else {
                 Log.i("Central", "NMST Service found.")
+                Thread {
+                    val requestCharacteristic = nmstService.getCharacteristic(UUID.fromString(central.context().getString(R.string.nmst_request_service_uuid)))
+                    val receiveCharacteristic = nmstService.getCharacteristic(UUID.fromString(central.context().getString(R.string.nmst_receive_service_uuid)))
+                    Thread.sleep(1000)
+                    central.write(receiveCharacteristic, run {
+                        val byteBuffer = ByteBuffer.allocate(1)
+                        byteBuffer.put(0xFE.toByte())
+                        byteBuffer.array()
+                    })
+                    val messages = nmstClient.messages.value!!
+                    central.messageQueue.addAll(messages)
+                    Thread.sleep(3)
+                    while (true) {
+                        if (!central.messageQueue.isEmpty()) {
+                            val message = central.messageQueue.removeFirst()
+
+                            val data = Json.encodeToString(message).toByteArray()
+                            val chunks = splitByteArray(data)
+
+                            central.write(receiveCharacteristic, run {
+                                val byteBuffer = ByteBuffer.allocate(9)
+                                byteBuffer.put(0xFF.toByte())
+                                byteBuffer.putInt(chunks.size)
+                                byteBuffer.putInt(data.size)
+                                byteBuffer.array()
+                            })
+
+                            chunks.forEach {
+                                central.write(receiveCharacteristic, it)
+                                Thread.sleep(3)
+                            }
+
+                            central.write(receiveCharacteristic, ByteArray(10))
+                        }
+
+                        Thread.sleep(10)
+                    }
+                }.start()
                 central.notificationCallback(nmstService.getCharacteristic(UUID.fromString("0f43d388-2ccd-4668-ab5c-5ba40a198261"))) { central, device, data ->
                     if (central.nmstBuffer == null) {
                         val buffer = ByteBuffer.wrap(data.value!!)

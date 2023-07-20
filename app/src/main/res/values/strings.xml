@@ -7,5 +7,6 @@
     <string name="key_private_key">KEY_PRIVATE_KEY</string>
     <string name="key_messages">KEY_MESSAGES</string>
     <string name="nmst_service_uuid">0f43d388-2ccd-4668-ab5c-5ba40a198261</string>
+    <string name="nmst_receive_service_uuid">24db9b2d-b3b2-4195-8d04-e0f0abaada75</string>
     <string name="nmst_request_service_uuid">24db9b2d-b3b2-4195-8d04-e0f0abaada75</string>
 </resources>

@@ -28,6 +28,21 @@ import kotlinx.datetime.Instant
 import java.util.Date
 import java.util.UUID
 
+fun splitByteArray(input: ByteArray): List<ByteArray> {
+    val chunkSize = 20
+    val chunks = mutableListOf<ByteArray>()
+
+    var index = 0
+    while (index < input.size) {
+        val endIndex = kotlin.math.min(index + chunkSize, input.size)
+        val chunk = input.sliceArray(index until endIndex)
+        chunks.add(chunk)
+        index = endIndex
+    }
+
+    return chunks
+}
+
 enum class SubscribeErrorCode {
 
 }
@@ -84,17 +99,6 @@ class NmstClient(private val context: Context, val peripheral: PeripheralBleServ
     }
 
     /**
-     * メッセージを受信する
-     *
-     * キューにメッセージが存在しない場合はnullを返す
-     *
-     * @return 受信したメッセージ
-     */
-    fun receive(): Message? {
-        return central.messageQueue.removeFirstOrNull()
-    }
-
-    /**
      * メッセージを送信する
      *
      * @return このメソッドは値を返さない
@@ -102,6 +106,7 @@ class NmstClient(private val context: Context, val peripheral: PeripheralBleServ
     fun send(msg: Message): Unit {
         Log.i(LOG_TAG, "Send message to ${msg.displayName}, body: ${msg.body}")
         peripheral.addQueue(msg)
+        central.messageQueue.add(msg)
     }
 
     private fun setupAdvertising() {
