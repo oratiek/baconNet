@@ -103,11 +103,16 @@ class MainActivity : ComponentActivity() {
                         val message: Message = Json.decodeFromString(data)
                         central.messageQueue.add(message)
                         nmstClient.messages.value?.add(message)
+                        val messages = this.getMessages()!!
+                        messages[message.messageId] = message
+                        this.setMessages(messages)
                         Log.i("NMST", "Messages: ${nmstClient.messages}")
                         central.nmstBuffer = null
                         Log.i("Central", "Receive: $data")
                         Log.i("Central", "Receive: $message")
                         central.disconnect()
+
+                        this.navigateToTimeline()
                     }
                 }
             }

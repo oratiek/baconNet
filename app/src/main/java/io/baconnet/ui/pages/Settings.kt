@@ -156,13 +156,38 @@ fun Settings() {
                         modifier = Modifier.padding(all = 16.dp),
                         verticalArrangement = Arrangement.spacedBy(16.dp)
                     ) {
-                        Text(text = "表示名", style = TextStyle(fontWeight = FontWeight.Bold))
-                        Text(text = "タイムライン上に表示される名前です。")
+                        Text(text = "公開鍵", style = TextStyle(fontWeight = FontWeight.Bold))
+                        Text(text = "ユーザーIDに使われる公開鍵です。")
                         TextField(
                             value = Base64.encodeToString(activity.getPublicKey()!!.encoded, Base64.DEFAULT),
                             onValueChange = {},
                             label = {
-                                Text(text = "表示名(8文字まで)")
+                                Text(text = "公開鍵(Base64)")
+                            },
+                            singleLine = true,
+                            modifier = Modifier.fillMaxWidth(),
+                        )
+                    }
+                }
+            }
+            item {
+                OutlinedCard(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(all = 16.dp),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+                ) {
+                    Column(
+                        modifier = Modifier.padding(all = 16.dp),
+                        verticalArrangement = Arrangement.spacedBy(16.dp)
+                    ) {
+                        Text(text = "秘密鍵", style = TextStyle(fontWeight = FontWeight.Bold))
+                        Text(text = "メッセージの署名に使われる秘密鍵です。")
+                        TextField(
+                            value = Base64.encodeToString(activity.getPrivateKey()!!.encoded, Base64.DEFAULT),
+                            onValueChange = {},
+                            label = {
+                                Text(text = "秘密鍵(Base64)")
                             },
                             singleLine = true,
                             modifier = Modifier.fillMaxWidth(),

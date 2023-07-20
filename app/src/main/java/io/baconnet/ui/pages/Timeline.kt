@@ -87,9 +87,11 @@ fun Timeline() {
             }
         }
     ) { paddingValues ->
-        Column(Modifier.padding(paddingValues)) {
-            messagesState.value.forEach { message ->
-                PostCard(body = message.body, displayName = message.displayName)
+        LazyColumn(contentPadding = paddingValues) {
+            item {
+                messagesState.value.reversed().forEach { message ->
+                    PostCard(body = message.body, displayName = message.displayName)
+                }
             }
         }
     }
