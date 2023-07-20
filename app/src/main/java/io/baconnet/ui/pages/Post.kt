@@ -64,9 +64,10 @@ fun Post() {
                     )
                 },
                 actions = {
-                    IconButton(onClick = { activity.nmstClient.send(Message("test", "testUserId", "testMessageId", "testBody",
-                        Clock.System.now()
-                    )) }) {
+                    IconButton(onClick = {
+                        activity.nmstClient.send(Message.newMessage(body, activity))
+                        activity.navigateToTimeline()
+                    }) {
                         Icon(
                             Icons.Filled.Send, contentDescription = "send icon", tint = Color.White
                         )

@@ -11,6 +11,7 @@ import android.content.Context
 import android.content.pm.PackageManager
 import android.os.ParcelUuid
 import androidx.core.app.ActivityCompat
+import io.baconnet.R
 import kotlinx.datetime.Clock
 import kotlinx.datetime.Instant
 import kotlinx.serialization.encodeToString
@@ -22,10 +23,7 @@ import java.util.Date
 import java.util.UUID
 
 class PeripheralBleServerManager(private val context: Context) : BleServerManager(context) {
-    companion object {
-        const val NMST_UUID = "0f43d388-2ccd-4668-ab5c-5ba40a198261"
-    }
-    private val nmstUUID = UUID.fromString(NMST_UUID)
+    private val nmstUUID = UUID.fromString(context.getString(R.string.nmst_service_uuid))
 
     val nmstCharacteristic = characteristic(nmstUUID, BluetoothGattCharacteristic.PROPERTY_NOTIFY, BluetoothGattCharacteristic.PERMISSION_READ, cccd())
     private var messageQueue = ArrayDeque<Message>()
@@ -46,7 +44,7 @@ class PeripheralBleServerManager(private val context: Context) : BleServerManage
     }
 
     fun splitByteArray(input: ByteArray): List<ByteArray> {
-        val chunkSize = 16
+        val chunkSize = 20
         val chunks = mutableListOf<ByteArray>()
 
         var index = 0
@@ -87,13 +85,13 @@ class PeripheralBleServerManager(private val context: Context) : BleServerManage
 
                     chunks.forEach {
                         connectedBleManager.notify(nmstCharacteristic, it)
-                        Thread.sleep(10)
+                        Thread.sleep(1)
                     }
 
                     connectedBleManager.notify(nmstCharacteristic, ByteArray(3))
                 }
 
-                Thread.sleep(10)
+                Thread.sleep(1)
             }
         }.start()
 

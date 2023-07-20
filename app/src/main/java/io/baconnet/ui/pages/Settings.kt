@@ -1,5 +1,6 @@
 package io.baconnet.ui.pages
 
+import android.util.Base64
 import android.util.Log
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -158,7 +159,7 @@ fun Settings() {
                         Text(text = "表示名", style = TextStyle(fontWeight = FontWeight.Bold))
                         Text(text = "タイムライン上に表示される名前です。")
                         TextField(
-                            value = activity.getPublicKey(),
+                            value = Base64.encodeToString(activity.getPublicKey()!!.encoded, Base64.DEFAULT),
                             onValueChange = {},
                             label = {
                                 Text(text = "表示名(8文字まで)")

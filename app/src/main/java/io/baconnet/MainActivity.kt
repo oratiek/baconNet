@@ -4,6 +4,7 @@ import android.Manifest
 import android.content.Context
 import android.content.pm.PackageManager
 import android.os.Bundle
+import android.util.Base64
 import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -18,6 +19,7 @@ import androidx.navigation.NavController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import io.baconnet.nmst.Message
 import io.baconnet.nmst.CentralBleServerManager
 import io.baconnet.nmst.ConnectionObserverInterface
 import io.baconnet.nmst.NmstClient
@@ -28,9 +30,16 @@ import io.baconnet.ui.pages.Settings
 import io.baconnet.ui.pages.Timeline
 import io.baconnet.ui.theme.Bacon_netTheme
 import kotlinx.serialization.decodeFromString
+import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import java.nio.ByteBuffer
+import java.security.KeyFactory
+import java.security.KeyPair
 import java.security.KeyPairGenerator
+import java.security.PrivateKey
+import java.security.PublicKey
+import java.security.spec.PKCS8EncodedKeySpec
+import java.security.spec.X509EncodedKeySpec
 import java.util.UUID
 
 class MainActivity : ComponentActivity() {
@@ -91,12 +100,13 @@ class MainActivity : ComponentActivity() {
                         central.nmstBuffer?.put(data.value!!)
                     } else {
                         val data = String(central.nmstBuffer!!.array())
-                        central.messageQueue.add(Json.decodeFromString(data))
-                        nmstClient.messages.value?.add(central.messageQueue.first())
+                        val message: Message = Json.decodeFromString(data)
+                        central.messageQueue.add(message)
+                        nmstClient.messages.value?.add(message)
                         Log.i("NMST", "Messages: ${nmstClient.messages}")
                         central.nmstBuffer = null
                         Log.i("Central", "Receive: $data")
-                        Log.i("Central", "Receive: ${central.messageQueue.first()}")
+                        Log.i("Central", "Receive: $message")
                         central.disconnect()
                     }
                 }
@@ -135,6 +145,7 @@ class MainActivity : ComponentActivity() {
         val publicKey = pref.getString(getString(R.string.key_public_key), "") ?: ""
         val privateKey = pref.getString(getString(R.string.key_private_key), "") ?: ""
         val displayName = pref.getString(getString(R.string.key_display_name), "") ?: ""
+        val messages = pref.getString(getString(R.string.key_messages), "") ?: ""
 
         with(pref.edit()) {
 
@@ -147,10 +158,30 @@ class MainActivity : ComponentActivity() {
                 val pair = generator.genKeyPair()
 
                 putString(getString(R.string.key_encryption_type), "RSA")
-                putString(getString(R.string.key_public_key), pair.public.toString())
-                putString(getString(R.string.key_private_key), pair.private.toString())
+                putString(getString(R.string.key_public_key), Base64.encodeToString(pair.public.encoded, Base64.DEFAULT))
+                putString(getString(R.string.key_private_key), Base64.encodeToString(pair.private.encoded, Base64.DEFAULT))
             }
 
+            if (messages == "") {
+                putString(getString(R.string.key_messages), Json.encodeToString(hashMapOf<String, Message>()))
+            }
+
+            apply()
+        }
+    }
+
+    fun getMessages(): HashMap<String, Message>? {
+        val pref = this.getPreferences(Context.MODE_PRIVATE)
+
+        val messages = pref.getString(getString(R.string.key_messages), "") ?: return null
+
+        return Json.decodeFromString(messages)
+    }
+
+    fun setMessages(messages: HashMap<String, Message>) {
+        val pref = this.getPreferences(Context.MODE_PRIVATE)
+        with(pref.edit()) {
+            putString(getString(R.string.key_messages), Json.encodeToString(messages))
             apply()
         }
     }
@@ -175,14 +206,22 @@ class MainActivity : ComponentActivity() {
         return pref.getString(getString(R.string.key_encryption_type), "") ?: ""
     }
 
-    public fun getPublicKey(): String {
+    public fun getPublicKey(): PublicKey? {
         val pref = this.getPreferences(Context.MODE_PRIVATE)
-        return pref.getString(getString(R.string.key_public_key), "") ?: ""
+
+        val publicKey = pref.getString(getString(R.string.key_public_key), "") ?: return null
+        val spec = X509EncodedKeySpec(Base64.decode(publicKey, Base64.DEFAULT))
+        val factory = KeyFactory.getInstance("RSA")
+        return factory.generatePublic(spec)
     }
 
-    public fun getPrivateKey(): String {
+    public fun getPrivateKey(): PrivateKey? {
         val pref = this.getPreferences(Context.MODE_PRIVATE)
-        return pref.getString(getString(R.string.key_private_key), "") ?: ""
+
+        val publicKey = pref.getString(getString(R.string.key_private_key), "") ?: return null
+        val spec = PKCS8EncodedKeySpec(Base64.decode(publicKey, Base64.DEFAULT))
+        val factory = KeyFactory.getInstance("RSA")
+        return factory.generatePrivate(spec)
     }
 
     public fun navigateToTimeline() {
