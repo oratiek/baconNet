@@ -65,7 +65,12 @@ fun Post() {
                 },
                 actions = {
                     IconButton(onClick = {
-                        activity.nmstClient.send(Message.newMessage(body, activity))
+                        val message = Message.newMessage(body, activity)
+                        activity.nmstClient.send(message)
+                        activity.nmstClient.messages.value?.add(message)
+                        val messages = activity.getMessages()!!
+                        messages[message.messageId] = message
+                        activity.setMessages(messages)
                         activity.navigateToTimeline()
                     }) {
                         Icon(

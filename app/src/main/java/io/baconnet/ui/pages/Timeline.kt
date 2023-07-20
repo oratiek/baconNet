@@ -90,7 +90,7 @@ fun Timeline() {
         LazyColumn(contentPadding = paddingValues) {
             item {
                 messagesState.value.reversed().forEach { message ->
-                    PostCard(body = message.body, displayName = message.displayName)
+                    PostCard(body = message.body, displayName = message.displayName, postedAt = message.postedAt)
                 }
             }
         }

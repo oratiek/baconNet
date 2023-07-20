@@ -6,6 +6,8 @@ import io.baconnet.MainActivity
 import kotlinx.datetime.Clock
 import kotlinx.datetime.Instant
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.encodeToString
+import kotlinx.serialization.json.Json
 import java.nio.charset.StandardCharsets.UTF_8
 import java.security.MessageDigest
 import java.security.PrivateKey
@@ -19,12 +21,13 @@ data class Message(public val displayName: String, public val userId: String, pu
         fun newMessage(body: String, context: Context): Message {
             val activity = context as MainActivity
             val displayName = activity.getDisplayName()
+            val postedAt = Clock.System.now()
             val publicKey = activity.getPublicKey()!!
-            val sign = sign("$displayName,$body", activity.getPrivateKey()!!)
+            val sign = sign("$displayName,${Json.encodeToString(postedAt)},$body", activity.getPrivateKey()!!)
             val md = MessageDigest.getInstance("SHA-256")
             val digest = md.digest(sign.toByteArray())
 
-            return Message(displayName, Base64.encodeToString(publicKey.encoded, Base64.DEFAULT), digest.joinToString(separator = "") { eachByte -> "%02x".format(eachByte) }, body, Clock.System.now(), sign)
+            return Message(displayName, Base64.encodeToString(publicKey.encoded, Base64.DEFAULT), digest.joinToString(separator = "") { eachByte -> "%02x".format(eachByte) }, body, postedAt, sign)
         }
 
         fun sign(plainText: String, privateKey: PrivateKey): String {

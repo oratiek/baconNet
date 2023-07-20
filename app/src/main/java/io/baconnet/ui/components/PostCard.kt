@@ -30,6 +30,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import io.baconnet.ui.helpers.GetDateAgo
 import io.baconnet.ui.theme.BaconGradient
+import kotlinx.datetime.Clock
+import kotlinx.datetime.Instant
+import kotlinx.datetime.toJavaInstant
 import java.util.Date
 
 @Composable
@@ -37,7 +40,7 @@ fun PostCard(
     displayName: String = "<no_name>",
     body: String = "<no_body>",
     isVerified: Boolean = false,
-    postedAt: Date = Date()
+    postedAt: Instant = Clock.System.now()
 ) {
     Card(
         modifier = Modifier
@@ -67,7 +70,7 @@ fun PostCard(
                         )
                     )
                     Text(
-                        text = GetDateAgo(postedAt, Date()),
+                        text = GetDateAgo(Date.from(postedAt.toJavaInstant()), Date()),
                         style = TextStyle(
                             fontWeight = FontWeight.Normal,
                             color = Color.Gray,

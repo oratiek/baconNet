@@ -195,6 +195,14 @@ fun Settings() {
                     }
                 }
             }
+            item{
+                Button(onClick = {
+                    activity.setMessages(hashMapOf())
+                    activity.nmstClient.messages.value = mutableListOf()
+                }) {
+                    Text(text = "TLの初期化")
+                }
+            }
         }
     }
 }

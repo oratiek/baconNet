@@ -10,7 +10,9 @@ import android.bluetooth.le.AdvertiseSettings
 import android.content.Context
 import android.content.pm.PackageManager
 import android.os.ParcelUuid
+import android.util.Log
 import androidx.core.app.ActivityCompat
+import io.baconnet.MainActivity
 import io.baconnet.R
 import kotlinx.datetime.Clock
 import kotlinx.datetime.Instant
@@ -68,6 +70,9 @@ class PeripheralBleServerManager(private val context: Context) : BleServerManage
         connectedBleManager.useServer(this)
 
         Thread {
+            this.messageQueue.addAll((context as MainActivity).nmstClient.messages.value!!)
+            Log.i("Peripheral", "Queued messages: ${context.nmstClient.messages.value!!}")
+            Thread.sleep(1000)
             while (true) {
                 if (!this.messageQueue.isEmpty()) {
                     val message = this.messageQueue.removeFirst()
@@ -85,13 +90,13 @@ class PeripheralBleServerManager(private val context: Context) : BleServerManage
 
                     chunks.forEach {
                         connectedBleManager.notify(nmstCharacteristic, it)
-                        Thread.sleep(1)
+                        Thread.sleep(3)
                     }
 
                     connectedBleManager.notify(nmstCharacteristic, ByteArray(3))
                 }
 
-                Thread.sleep(1)
+                Thread.sleep(3)
             }
         }.start()
 

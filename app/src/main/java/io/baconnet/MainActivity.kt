@@ -64,7 +64,6 @@ class MainActivity : ComponentActivity() {
         permissionLauncher.launch(requestPermissions)
 
         val peripheral = PeripheralBleServerManager(this)
-        peripheral.open()
         val central = CentralBleServerManager(this, null, 0, ArrayDeque(), arrayListOf())
         central.setConnectionObserver(object: ConnectionObserverInterface {})
         central.discoveredServicesHandler = { central, gatt, services ->
@@ -101,26 +100,31 @@ class MainActivity : ComponentActivity() {
                     } else {
                         val data = String(central.nmstBuffer!!.array())
                         val message: Message = Json.decodeFromString(data)
-                        central.messageQueue.add(message)
-                        nmstClient.messages.value?.add(message)
                         val messages = this.getMessages()!!
-                        messages[message.messageId] = message
-                        this.setMessages(messages)
-                        Log.i("NMST", "Messages: ${nmstClient.messages}")
-                        central.nmstBuffer = null
-                        Log.i("Central", "Receive: $data")
-                        Log.i("Central", "Receive: $message")
-                        central.disconnect()
+                        if (!messages.containsKey(message.messageId)) {
+                            messages[message.messageId] = message
 
-                        this.navigateToTimeline()
+                            central.messageQueue.add(message)
+                            nmstClient.messages.value?.add(message)
+                            this.setMessages(messages)
+                            Log.i("NMST", "Messages: ${nmstClient.messages}")
+                            central.nmstBuffer = null
+                            Log.i("Central", "Receive: $data")
+                            Log.i("Central", "Receive: $message")
+
+                            this.navigateToTimeline()
+                        }
                     }
                 }
             }
         }
         nmstClient = NmstClient(this, peripheral, central, MutableLiveData())
-        nmstClient.messages.value = mutableListOf()
-        nmstClient.messages.postValue(mutableListOf())
+        val mutableCollection = mutableListOf<Message>()
+        mutableCollection.addAll(this.getMessages()!!.values)
+        nmstClient.messages.value = mutableCollection
+        nmstClient.messages.postValue(mutableCollection)
         nmstClient.init()
+        peripheral.open()
 
         setContent {
             Bacon_netTheme {
