@@ -20,7 +20,9 @@ import android.os.Looper
 import android.os.ParcelUuid
 import android.util.Log
 import androidx.activity.result.ActivityResultCaller
+import androidx.compose.runtime.MutableState
 import androidx.core.app.ActivityCompat
+import androidx.lifecycle.MutableLiveData
 import kotlinx.datetime.Clock
 import kotlinx.datetime.Instant
 import java.util.Date
@@ -32,7 +34,7 @@ enum class SubscribeErrorCode {
 
 enum class SendErrorCode {}
 
-class NmstClient(private val context: Context, val peripheral: PeripheralBleServerManager, val central: CentralBleServerManager) {
+class NmstClient(private val context: Context, val peripheral: PeripheralBleServerManager, val central: CentralBleServerManager, var messages: MutableLiveData<MutableList<Message>>) {
     companion object {
         const val VERSION = 0
         const val LOG_TAG = "NMST"

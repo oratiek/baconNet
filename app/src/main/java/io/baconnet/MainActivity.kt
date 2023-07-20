@@ -9,8 +9,11 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.runtime.mutableStateListOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.ui.platform.LocalContext
 import androidx.core.app.ActivityCompat
+import androidx.lifecycle.MutableLiveData
 import androidx.navigation.NavController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -89,6 +92,8 @@ class MainActivity : ComponentActivity() {
                     } else {
                         val data = String(central.nmstBuffer!!.array())
                         central.messageQueue.add(Json.decodeFromString(data))
+                        nmstClient.messages.value?.add(central.messageQueue.first())
+                        Log.i("NMST", "Messages: ${nmstClient.messages}")
                         central.nmstBuffer = null
                         Log.i("Central", "Receive: $data")
                         Log.i("Central", "Receive: ${central.messageQueue.first()}")
@@ -97,7 +102,9 @@ class MainActivity : ComponentActivity() {
                 }
             }
         }
-        nmstClient = NmstClient(this, peripheral, central)
+        nmstClient = NmstClient(this, peripheral, central, MutableLiveData())
+        nmstClient.messages.value = mutableListOf()
+        nmstClient.messages.postValue(mutableListOf())
         nmstClient.init()
 
         setContent {

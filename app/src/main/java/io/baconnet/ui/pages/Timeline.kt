@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Send
 import androidx.compose.material.icons.filled.Settings
@@ -21,6 +22,12 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import io.baconnet.R
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.State
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.livedata.observeAsState
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.rememberVectorPainter
@@ -37,6 +44,8 @@ import io.baconnet.nmst.NmstClient
 import io.baconnet.nmst.PeripheralBleServerManager
 import io.baconnet.ui.components.PostCard
 import io.baconnet.ui.theme.BaconPink
+import kotlinx.datetime.Clock
+import kotlinx.datetime.Instant
 import kotlinx.serialization.decodeFromString
 import kotlinx.serialization.json.Json
 import java.nio.ByteBuffer
@@ -46,6 +55,7 @@ import java.util.UUID
 @Composable
 fun Timeline() {
     val activity = LocalContext.current as MainActivity
+    val messagesState = activity.nmstClient.messages.observeAsState(initial = emptyList())
 
     Scaffold(
         topBar = {
@@ -77,23 +87,9 @@ fun Timeline() {
             }
         }
     ) { paddingValues ->
-        LazyColumn(contentPadding = paddingValues) {
-            item {
-                PostCard()
-                PostCard(isVerified = true)
-                PostCard()
-                PostCard()
-                PostCard()
-                PostCard()
-                PostCard()
-                PostCard()
-                PostCard()
-                PostCard()
-                PostCard()
-                PostCard()
-                PostCard()
-                PostCard()
-                Box(modifier = Modifier.padding(vertical = 128.dp))
+        Column(Modifier.padding(paddingValues)) {
+            messagesState.value.forEach { message ->
+                PostCard(body = message.body, displayName = message.displayName)
             }
         }
     }
