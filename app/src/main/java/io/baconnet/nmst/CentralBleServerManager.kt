@@ -1,5 +1,6 @@
 package io.baconnet.nmst
 
+import android.bluetooth.BluetoothDevice
 import android.bluetooth.BluetoothGatt
 import android.bluetooth.BluetoothGattCharacteristic
 import android.bluetooth.BluetoothGattService
@@ -9,7 +10,7 @@ import no.nordicsemi.android.ble.BleManager
 import no.nordicsemi.android.ble.data.Data
 import java.nio.ByteBuffer
 
-class CentralBleServerManager(context: Context, var nmstBuffer: ByteBuffer?, var nmstReadCount: Int, var messageQueue: ArrayDeque<Message>) : BleManager(context) {
+class CentralBleServerManager(context: Context, var nmstBuffer: ByteBuffer?, var nmstReadCount: Int, var messageQueue: ArrayDeque<Message>, var deviceFilter: ArrayList<String>) : BleManager(context) {
     var discoveredServicesHandler: ((CentralBleServerManager, BluetoothGatt, List<BluetoothGattService>) -> Unit)? = null
 
     private var gattCallback: BleManagerGattCallback? = null
@@ -31,8 +32,8 @@ class CentralBleServerManager(context: Context, var nmstBuffer: ByteBuffer?, var
 
     fun context() = context
 
-    fun notificationCallback(characteristic: BluetoothGattCharacteristic, callback: (Data) -> Unit) {
-        setNotificationCallback(characteristic).with { _, data -> callback(data) }
+    fun notificationCallback(characteristic: BluetoothGattCharacteristic, callback: (CentralBleServerManager, BluetoothDevice, Data) -> Unit) {
+        setNotificationCallback(characteristic).with { device, data -> callback(this, device, data) }
         enableNotifications(characteristic).enqueue()
     }
 }

@@ -54,7 +54,7 @@ class NmstClient(private val context: Context, val peripheral: PeripheralBleServ
                     throw RuntimeException("BLUETOOTH_CONNECT is not permitted.")
                 }
 
-                if (device.name == "IzdaU1") {
+                if (result.scanRecord?.serviceUuids?.contains(ParcelUuid.fromString("0f43d388-2ccd-4668-ab5c-5ba40a198261")) == true) {
                     central.connect(device).enqueue()
                 }
             }
@@ -97,10 +97,9 @@ class NmstClient(private val context: Context, val peripheral: PeripheralBleServ
      *
      * @return このメソッドは値を返さない
      */
-    fun send(msg: Message, onSend: () -> Unit, onError: (code: SendErrorCode) -> Unit): Unit {
+    fun send(msg: Message): Unit {
         Log.i(LOG_TAG, "Send message to ${msg.displayName}, body: ${msg.body}")
         peripheral.addQueue(msg)
-        onSend()
     }
 
     private fun setupAdvertising() {

@@ -32,7 +32,10 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import io.baconnet.MainActivity
+import io.baconnet.nmst.Message
 import io.baconnet.ui.theme.BaconPink
+import kotlinx.datetime.Clock
+import kotlinx.datetime.Instant
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -61,7 +64,9 @@ fun Post() {
                     )
                 },
                 actions = {
-                    IconButton(onClick = { /*TODO*/ }) {
+                    IconButton(onClick = { activity.nmstClient.send(Message("test", "testUserId", "testMessageId", "testBody",
+                        Clock.System.now()
+                    )) }) {
                         Icon(
                             Icons.Filled.Send, contentDescription = "send icon", tint = Color.White
                         )

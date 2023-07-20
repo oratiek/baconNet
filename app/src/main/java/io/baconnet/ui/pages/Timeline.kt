@@ -45,48 +45,6 @@ import java.util.UUID
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun Timeline() {
-    val peripheral = PeripheralBleServerManager(LocalContext.current)
-    peripheral.open()
-    val central = CentralBleServerManager(LocalContext.current, null, 0, ArrayDeque())
-    central.setConnectionObserver(object: ConnectionObserverInterface {})
-    central.discoveredServicesHandler = { central, gatt, services ->
-        val nmstService = services.find {
-            it.uuid == UUID.fromString("0f43d388-2ccd-4668-ab5c-5ba40a198261")
-        }
-        Log.i("Central", "Service discovered.")
-        if (nmstService == null) {
-            if (ActivityCompat.checkSelfPermission(
-                    central.context(),
-                    Manifest.permission.BLUETOOTH_CONNECT
-                ) != PackageManager.PERMISSION_GRANTED
-            ) {
-                gatt.disconnect()
-            }
-        } else {
-            Log.i("Central", "NMST Service found.")
-            central.notificationCallback(nmstService.getCharacteristic(UUID.fromString("0f43d388-2ccd-4668-ab5c-5ba40a198261"))) {
-                if (central.nmstBuffer == null) {
-                    Log.i("Central", "Receive: ${it.value!![1].toInt()}")
-                    if (it.value!![2].toInt() == -1) {
-                        central.nmstBuffer = ByteBuffer.wrap(ByteArray(it.value!![1].toInt()))
-                        central.nmstReadCount = it.value!![0].toInt()
-                    }
-                } else if (central.nmstReadCount != 0) {
-                    central.nmstReadCount--
-                    Log.i("Central", "Receive: ${String(it.value!!)}")
-                    central.nmstBuffer?.put(it.value!!)
-                } else {
-                    val data = String(central.nmstBuffer!!.array())
-                    central.nmstBuffer = null
-                    Log.i("Central", "Receive: $data")
-                    Log.i("Central", "Receive: ${Json.decodeFromString<Message>(data)}")
-                }
-            }
-        }
-    }
-    val client = NmstClient(LocalContext.current, peripheral, central)
-    client.init()
-
     val activity = LocalContext.current as MainActivity
 
     Scaffold(
