@@ -50,6 +50,10 @@ fun Settings() {
     var displayName by remember { mutableStateOf(oldDisplayName) }
     var displayNameError by remember { mutableStateOf("") }
 
+    var oldOpenAIKey = activity.getOpenAIKey()
+    var openAIKey by remember { mutableStateOf(oldOpenAIKey) }
+    var openAIKeyError by remember { mutableStateOf("") }
+
     fun handleChanges() {
         displayNameError = ""
 
@@ -65,6 +69,9 @@ fun Settings() {
     }
 
     fun handleSaveClick() {
+        activity.setOpenAIKey(openAIKey)
+        oldOpenAIKey = activity.getOpenAIKey()
+
         if (!canSave) {
             return
         }
@@ -188,6 +195,34 @@ fun Settings() {
                             onValueChange = {},
                             label = {
                                 Text(text = "秘密鍵(Base64)")
+                            },
+                            singleLine = true,
+                            modifier = Modifier.fillMaxWidth(),
+                        )
+                    }
+                }
+            }
+            item {
+                OutlinedCard(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(all = 16.dp),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+                ) {
+                    Column(
+                        modifier = Modifier.padding(all = 16.dp),
+                        verticalArrangement = Arrangement.spacedBy(16.dp)
+                    ) {
+                        Text(text = "OpenAI API Key", style = TextStyle(fontWeight = FontWeight.Bold))
+                        Text(text = "メッセージの検閲に使用するOpenAI Keyです。")
+                        TextField(
+                            value = openAIKey,
+                            onValueChange = { newVal ->
+                                openAIKey = newVal.trim().take(64)
+                                handleChanges()
+                            },
+                            label = {
+                                Text(text = "OpenAI API Key")
                             },
                             singleLine = true,
                             modifier = Modifier.fillMaxWidth(),

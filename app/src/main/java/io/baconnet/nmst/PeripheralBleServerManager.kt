@@ -14,6 +14,7 @@ import android.util.Log
 import androidx.core.app.ActivityCompat
 import io.baconnet.MainActivity
 import io.baconnet.R
+import io.baconnet.inspection.ChatGptInspector
 import kotlinx.datetime.Clock
 import kotlinx.datetime.Instant
 import kotlinx.serialization.decodeFromString
@@ -85,19 +86,27 @@ class PeripheralBleServerManager(private val context: Context) : BleServerManage
                 val data = String(nmstBuffer!!.array())
                 val message: Message = Json.decodeFromString(data)
                 val messages = (context as MainActivity).getMessages()!!
-                if (!messages.containsKey(message.messageId)) {
-                    messages[message.messageId] = message
+                messages[message.messageId] = message
 
-                    context.nmstClient.central.messageQueue.add(message)
-                    context.nmstClient.messages.value?.add(message)
-                    context.setMessages(messages)
-                    Log.i("NMST", "Messages: ${context.nmstClient.messages}")
-                    nmstBuffer = null
-                    Log.i("Central", "Receive: $data")
-                    Log.i("Central", "Receive: $message")
+                context.nmstClient.central.messageQueue.add(message)
+                context.nmstClient.messages.value?.add(message)
+                context.setMessages(messages)
+                Log.i("NMST", "Messages: ${context.nmstClient.messages}")
+                nmstBuffer = null
+                Log.i("Central", "Receive: $data")
+                Log.i("Central", "Receive: $message")
 
-                    context.navigateToTimeline()
-                }
+                context.navigateToTimeline()
+
+                Thread {
+                    ChatGptInspector().inspect(context, message.displayName, message.body) {
+                        if (it) {
+                            val ids = context.getVerifiedMessageIds()
+                            ids.add(message.messageId)
+                            context.setVerifiedMessageIds(ids)
+                        }
+                    }
+                }.start()
             }
         }
 
@@ -130,13 +139,13 @@ class PeripheralBleServerManager(private val context: Context) : BleServerManage
 
                     chunks.forEach {
                         connectedBleManager.notify(nmstCharacteristic, it)
-                        Thread.sleep(3)
+                        Thread.sleep(1)
                     }
 
                     connectedBleManager.notify(nmstCharacteristic, ByteArray(3))
                 }
 
-                Thread.sleep(10)
+                Thread.sleep(3)
             }
         }.start()
 

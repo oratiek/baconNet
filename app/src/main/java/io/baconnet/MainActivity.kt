@@ -19,6 +19,7 @@ import androidx.navigation.NavController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import io.baconnet.inspection.ChatGptInspector
 import io.baconnet.nmst.Message
 import io.baconnet.nmst.CentralBleServerManager
 import io.baconnet.nmst.ConnectionObserverInterface
@@ -116,13 +117,13 @@ class MainActivity : ComponentActivity() {
 
                             chunks.forEach {
                                 central.write(receiveCharacteristic, it)
-                                Thread.sleep(3)
+                                Thread.sleep(1)
                             }
 
                             central.write(receiveCharacteristic, ByteArray(10))
                         }
 
-                        Thread.sleep(10)
+                        Thread.sleep(3)
                     }
                 }.start()
                 central.notificationCallback(nmstService.getCharacteristic(UUID.fromString("0f43d388-2ccd-4668-ab5c-5ba40a198261"))) { central, device, data ->
@@ -140,19 +141,27 @@ class MainActivity : ComponentActivity() {
                         val data = String(central.nmstBuffer!!.array())
                         val message: Message = Json.decodeFromString(data)
                         val messages = this.getMessages()!!
-                        if (!messages.containsKey(message.messageId)) {
-                            messages[message.messageId] = message
+                        messages[message.messageId] = message
 
-                            central.messageQueue.add(message)
-                            nmstClient.messages.value?.add(message)
-                            this.setMessages(messages)
-                            Log.i("NMST", "Messages: ${nmstClient.messages}")
-                            central.nmstBuffer = null
-                            Log.i("Central", "Receive: $data")
-                            Log.i("Central", "Receive: $message")
+                        central.messageQueue.add(message)
+                        nmstClient.messages.value?.add(message)
+                        this.setMessages(messages)
+                        Log.i("NMST", "Messages: ${nmstClient.messages}")
+                        central.nmstBuffer = null
+                        Log.i("Central", "Receive: $data")
+                        Log.i("Central", "Receive: $message")
 
-                            this.navigateToTimeline()
-                        }
+                        this.navigateToTimeline()
+
+                        Thread {
+                            ChatGptInspector().inspect(this, message.displayName, message.body) {
+                                if (it) {
+                                    val ids = this.getVerifiedMessageIds()
+                                    ids.add(message.messageId)
+                                    this.setVerifiedMessageIds(ids)
+                                }
+                            }
+                        }.start()
                     }
                 }
             }
@@ -218,6 +227,22 @@ class MainActivity : ComponentActivity() {
         }
     }
 
+    fun getVerifiedMessageIds(): ArrayList<String> {
+        val pref = this.getPreferences(Context.MODE_PRIVATE)
+
+        val messages = pref.getString(getString(R.string.key_verified_message_ids), "[]") ?: return arrayListOf()
+
+        return Json.decodeFromString(messages)
+    }
+
+    fun setVerifiedMessageIds(ids: ArrayList<String>) {
+        val pref = this.getPreferences(Context.MODE_PRIVATE)
+        with(pref.edit()) {
+            putString(getString(R.string.key_verified_message_ids), Json.encodeToString(ids))
+            apply()
+        }
+    }
+
     fun getMessages(): HashMap<String, Message>? {
         val pref = this.getPreferences(Context.MODE_PRIVATE)
 
@@ -230,6 +255,20 @@ class MainActivity : ComponentActivity() {
         val pref = this.getPreferences(Context.MODE_PRIVATE)
         with(pref.edit()) {
             putString(getString(R.string.key_messages), Json.encodeToString(messages))
+            apply()
+        }
+    }
+
+    public fun getOpenAIKey(): String {
+        val pref = this.getPreferences(Context.MODE_PRIVATE)
+
+        return pref.getString(getString(R.string.key_openai_key), "") ?: ""
+    }
+
+    public fun setOpenAIKey(openAIKey: String) {
+        val pref = this.getPreferences(Context.MODE_PRIVATE)
+        with(pref.edit()) {
+            putString(getString(R.string.key_openai_key), openAIKey)
             apply()
         }
     }

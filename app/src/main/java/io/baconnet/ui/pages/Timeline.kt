@@ -89,8 +89,12 @@ fun Timeline() {
     ) { paddingValues ->
         LazyColumn(contentPadding = paddingValues) {
             item {
-                messagesState.value.reversed().forEach { message ->
-                    PostCard(body = message.body, displayName = message.displayName, postedAt = message.postedAt)
+                val verifiedIds = activity.getVerifiedMessageIds()
+                val messages = activity.getMessages()!!.values.sortedBy {
+                    it.postedAt
+                }
+                messages.reversed().forEach { message ->
+                    PostCard(body = message.body, displayName = message.displayName, postedAt = message.postedAt, isVerified = verifiedIds.contains(message.messageId))
                 }
             }
         }
