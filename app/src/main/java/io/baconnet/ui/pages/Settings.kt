@@ -54,6 +54,9 @@ fun Settings() {
     var openAIKey by remember { mutableStateOf(oldOpenAIKey) }
     var openAIKeyError by remember { mutableStateOf("") }
 
+    var oldEmail = activity.getEmail()
+    var email by remember { mutableStateOf(oldEmail) }
+
     fun handleChanges() {
         displayNameError = ""
 
@@ -71,6 +74,11 @@ fun Settings() {
     fun handleSaveClick() {
         activity.setOpenAIKey(openAIKey)
         oldOpenAIKey = activity.getOpenAIKey()
+
+        if (email != null && email != "") {
+            activity.setEmail(email!!)
+            oldEmail = activity.getEmail()
+        }
 
         if (!canSave) {
             return
@@ -223,6 +231,34 @@ fun Settings() {
                             },
                             label = {
                                 Text(text = "OpenAI API Key")
+                            },
+                            singleLine = true,
+                            modifier = Modifier.fillMaxWidth(),
+                        )
+                    }
+                }
+            }
+            item {
+                OutlinedCard(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(all = 16.dp),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 2.dp),
+                ) {
+                    Column(
+                        modifier = Modifier.padding(all = 16.dp),
+                        verticalArrangement = Arrangement.spacedBy(16.dp)
+                    ) {
+                        Text(text = "Email", style = TextStyle(fontWeight = FontWeight.Bold))
+                        Text(text = "Gravatarでアイコンを表示するためのメールアドレスです。")
+                        TextField(
+                            value = email ?: "",
+                            onValueChange = { newVal ->
+                                email = newVal.trim().take(64)
+                                handleChanges()
+                            },
+                            label = {
+                                Text(text = "Email")
                             },
                             singleLine = true,
                             modifier = Modifier.fillMaxWidth(),

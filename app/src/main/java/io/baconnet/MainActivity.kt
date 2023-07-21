@@ -259,6 +259,20 @@ class MainActivity : ComponentActivity() {
         }
     }
 
+    public fun getEmail(): String? {
+        val pref = this.getPreferences(Context.MODE_PRIVATE)
+
+        return pref.getString(getString(R.string.key_email), "")
+    }
+
+    public fun setEmail(email: String) {
+        val pref = this.getPreferences(Context.MODE_PRIVATE)
+        with(pref.edit()) {
+            putString(getString(R.string.key_email), email)
+            apply()
+        }
+    }
+
     public fun getOpenAIKey(): String {
         val pref = this.getPreferences(Context.MODE_PRIVATE)
 

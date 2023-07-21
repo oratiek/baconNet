@@ -26,6 +26,7 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.TextUnit
+import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import io.baconnet.ui.helpers.GetDateAgo
@@ -66,7 +67,8 @@ fun PostCard(
                 ) {
                     Text(
                         text = displayName, style = TextStyle(
-                            fontWeight = FontWeight.Normal
+                            fontWeight = FontWeight.Bold,
+                            fontSize = 16.sp
                         )
                     )
                     Text(
