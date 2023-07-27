@@ -16,19 +16,21 @@ import java.security.Signature
 
 
 @Serializable
-data class Message(public val displayName: String, public val userId: String, val email: String?, public val messageId: String, public val body: String, public val postedAt: Instant, public val sign: String, val sentDevices: ArrayList<String>) {
+data class Message(public val displayName: String, public val userId: String, val emailHash: String?, public val messageId: String, public val body: String, public val postedAt: Instant, public val sign: String, val sentDevices: ArrayList<String>) {
     companion object {
         fun newMessage(body: String, context: Context): Message {
             val activity = context as MainActivity
             val displayName = activity.getDisplayName()
-            val email = activity.getEmail()
+            val email = activity.getEmail() ?: "example@example.com"
             val postedAt = Clock.System.now()
             val publicKey = activity.getPublicKey()!!
             val sign = sign("$displayName,${Json.encodeToString(postedAt)},$body", activity.getPrivateKey()!!)
             val md = MessageDigest.getInstance("SHA-256")
             val digest = md.digest(sign.toByteArray())
+            val md5 = MessageDigest.getInstance("md5")
+            val emailDigest = md5.digest(email.toByteArray())
 
-            return Message(displayName, Base64.encodeToString(publicKey.encoded, Base64.DEFAULT), email, digest.joinToString(separator = "") { eachByte -> "%02x".format(eachByte) }, body, postedAt, sign, arrayListOf())
+            return Message(displayName, Base64.encodeToString(publicKey.encoded, Base64.DEFAULT), emailDigest.joinToString(separator = "") { eachByte -> "%02x".format(eachByte) }, digest.joinToString(separator = "") { eachByte -> "%02x".format(eachByte) }, body, postedAt, sign, arrayListOf())
         }
 
         fun sign(plainText: String, privateKey: PrivateKey): String {

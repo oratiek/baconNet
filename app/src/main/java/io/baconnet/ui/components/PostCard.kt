@@ -29,11 +29,13 @@ import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.TextUnitType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import coil.compose.AsyncImage
 import io.baconnet.ui.helpers.GetDateAgo
 import io.baconnet.ui.theme.BaconGradient
 import kotlinx.datetime.Clock
 import kotlinx.datetime.Instant
 import kotlinx.datetime.toJavaInstant
+import java.security.MessageDigest
 import java.util.Date
 
 @Composable
@@ -41,6 +43,7 @@ fun PostCard(
     displayName: String = "<no_name>",
     body: String = "<no_body>",
     isVerified: Boolean = false,
+    emailHash: String = "31c5543c1734d25c7206f5fd591525d0295bec6fe84ff82f946a34fe970a1e66",
     postedAt: Instant = Clock.System.now()
 ) {
     Card(
@@ -53,11 +56,11 @@ fun PostCard(
     ) {
         Row(Modifier.padding(all = 16.dp), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
             Column {
-                Box(
-                    Modifier
-                        .size(32.dp)
-                        .clip(CircleShape)
-                        .background(brush = BaconGradient)
+
+                AsyncImage(
+                    model = "https://s.gravatar.com/avatar/$emailHash",
+                    contentDescription = "Translated description of what the image contains",
+                    modifier = Modifier.size(48.dp).clip(CircleShape)
                 )
             }
             Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {

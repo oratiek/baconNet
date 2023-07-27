@@ -94,7 +94,7 @@ fun Timeline() {
                     it.postedAt
                 }
                 messages.reversed().forEach { message ->
-                    PostCard(body = message.body, displayName = message.displayName, postedAt = message.postedAt, isVerified = verifiedIds.contains(message.messageId))
+                    PostCard(body = message.body, displayName = message.displayName, postedAt = message.postedAt, isVerified = verifiedIds.contains(message.messageId), emailHash = message.emailHash ?: "31c5543c1734d25c7206f5fd591525d0295bec6fe84ff82f946a34fe970a1e66")
                 }
             }
         }
