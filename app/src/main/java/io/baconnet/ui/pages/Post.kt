@@ -33,6 +33,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import io.baconnet.MainActivity
 import io.baconnet.nmst.Message
+import io.baconnet.nmst.MessageType
 import io.baconnet.ui.theme.BaconPink
 import kotlinx.datetime.Clock
 import kotlinx.datetime.Instant
@@ -65,7 +66,7 @@ fun Post() {
                 },
                 actions = {
                     IconButton(onClick = {
-                        val message = Message.newMessage(body, activity)
+                        val message = Message.newMessage(body, MessageType.Default, activity)
                         activity.nmstClient.send(message)
                         activity.nmstClient.messages.value?.add(message)
                         val messages = activity.getMessages()!!

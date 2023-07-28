@@ -14,11 +14,15 @@ import java.security.PrivateKey
 import java.security.PublicKey
 import java.security.Signature
 
+enum class MessageType {
+    Default,
+    Like
+}
 
 @Serializable
-data class Message(public val displayName: String, public val userId: String, val emailHash: String?, public val messageId: String, public val body: String, public val postedAt: Instant, public val sign: String, val sentDevices: ArrayList<String>) {
+data class Message(val messageType: MessageType, public val displayName: String, public val userId: String, val emailHash: String?, public val messageId: String, public val body: String, public val postedAt: Instant, public val sign: String, val sentDevices: ArrayList<String>) {
     companion object {
-        fun newMessage(body: String, context: Context): Message {
+        fun newMessage(body: String, type: MessageType, context: Context): Message {
             val activity = context as MainActivity
             val displayName = activity.getDisplayName()
             val email = activity.getEmail() ?: "example@example.com"
@@ -30,7 +34,7 @@ data class Message(public val displayName: String, public val userId: String, va
             val md5 = MessageDigest.getInstance("md5")
             val emailDigest = md5.digest(email.toByteArray())
 
-            return Message(displayName, Base64.encodeToString(publicKey.encoded, Base64.DEFAULT), emailDigest.joinToString(separator = "") { eachByte -> "%02x".format(eachByte) }, digest.joinToString(separator = "") { eachByte -> "%02x".format(eachByte) }, body, postedAt, sign, arrayListOf())
+            return Message(type, displayName, Base64.encodeToString(publicKey.encoded, Base64.DEFAULT), emailDigest.joinToString(separator = "") { eachByte -> "%02x".format(eachByte) }, digest.joinToString(separator = "") { eachByte -> "%02x".format(eachByte) }, body, postedAt, sign, arrayListOf())
         }
 
         fun sign(plainText: String, privateKey: PrivateKey): String {

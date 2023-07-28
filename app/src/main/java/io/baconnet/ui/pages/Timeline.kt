@@ -40,6 +40,7 @@ import io.baconnet.MainActivity
 import io.baconnet.nmst.CentralBleServerManager
 import io.baconnet.nmst.ConnectionObserverInterface
 import io.baconnet.nmst.Message
+import io.baconnet.nmst.MessageType
 import io.baconnet.nmst.NmstClient
 import io.baconnet.nmst.PeripheralBleServerManager
 import io.baconnet.ui.components.PostCard
@@ -55,7 +56,16 @@ import java.util.UUID
 @Composable
 fun Timeline() {
     val activity = LocalContext.current as MainActivity
-    val messagesState = activity.nmstClient.messages.observeAsState(initial = emptyList())
+    val messages = activity.getMessages()!!.values.sortedBy {
+        it.postedAt
+    }
+
+    val likes = hashMapOf<String, Int>()
+    messages.forEach {
+        if (it.messageType == MessageType.Like) {
+            likes[it.body] = (likes[it.body] ?: 0) + 1
+        }
+    }
 
     Scaffold(
         topBar = {
@@ -90,11 +100,18 @@ fun Timeline() {
         LazyColumn(contentPadding = paddingValues) {
             item {
                 val verifiedIds = activity.getVerifiedMessageIds()
-                val messages = activity.getMessages()!!.values.sortedBy {
-                    it.postedAt
-                }
+
                 messages.reversed().forEach { message ->
-                    PostCard(body = message.body, displayName = message.displayName, postedAt = message.postedAt, isVerified = verifiedIds.contains(message.messageId), emailHash = message.emailHash ?: "31c5543c1734d25c7206f5fd591525d0295bec6fe84ff82f946a34fe970a1e66")
+                    PostCard(body = message.body, displayName = message.displayName, postedAt = message.postedAt, isVerified = verifiedIds.contains(message.messageId), emailHash = message.emailHash ?: "31c5543c1734d25c7206f5fd591525d0295bec6fe84ff82f946a34fe970a1e66", likes = likes[message.messageId] ?: 0, onLikeStateChanged = {
+                        if (it) {
+                            val sendMessage = Message.newMessage(message.messageId, MessageType.Like, activity)
+                            activity.nmstClient.send(sendMessage)
+                            activity.nmstClient.messages.value?.add(sendMessage)
+                            val mainMessages = activity.getMessages()!!
+                            mainMessages[message.messageId] = message
+                            activity.setMessages(mainMessages)
+                        }
+                    })
                 }
             }
         }
